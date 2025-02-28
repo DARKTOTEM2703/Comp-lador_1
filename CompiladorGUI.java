@@ -10,10 +10,9 @@ public class CompiladorGUI extends JFrame {
     private final JTable tablaSimbolos, tablaErrores;
     private final DefaultTableModel modeloTablaSimbolos, modeloTablaErrores;
 
-    private static final String REGEX_VARIABLE = "^JSJ[a-z][0-9]+$";
-
-    private final Map<String, String> tablaSimbolosMap = new HashMap<>();
+    private static final String REGEX_VARIABLE = "^JSJ[a-zA-Z][0-9]+$"; // Actualiza la regex si lo necesitas.
     private final java.util.List<Error> tablaErroresList = new ArrayList<>();
+    private final Map<String, String> tablaSimbolosMap = new HashMap<>();
 
     public CompiladorGUI() {
         setTitle("Compilador - Análisis Semántico");
@@ -30,7 +29,6 @@ public class CompiladorGUI extends JFrame {
         add(botonAnalizar, BorderLayout.SOUTH);
 
         JPanel panelTablas = new JPanel(new GridLayout(2, 1));
-
         modeloTablaSimbolos = new DefaultTableModel(new String[] { "Lexema", "Tipo de dato" }, 0);
         tablaSimbolos = new JTable(modeloTablaSimbolos);
         panelTablas.add(new JScrollPane(tablaSimbolos));
@@ -65,7 +63,7 @@ public class CompiladorGUI extends JFrame {
 
         if (linea.matches("^(ENTERO|FLOTANTE|CADENA)\\s*=.*;$")) {
             declararVariables(linea, numeroLinea);
-        } else if (linea.matches("^JSJ[a-z][0-9]+\\s*=.*;$")) {
+        } else if (linea.matches("^JSJ[a-zA-Z][0-9]+\\s*=.*;$")) {
             validarAsignaciones(linea, numeroLinea);
         } else {
             agregarError("Sintaxis inválida", linea, numeroLinea, "Formato incorrecto.");
@@ -80,7 +78,7 @@ public class CompiladorGUI extends JFrame {
         for (String var : variables) {
             var = var.trim();
             if (!var.matches(REGEX_VARIABLE)) {
-                agregarError("Variable inválida", var, numeroLinea, "No cumple con el formato JSJ[a-z][0-9]+.");
+                agregarError("Variable inválida", var, numeroLinea, "No cumple con el formato JSJ[a-zA-Z][0-9]+.");
             } else {
                 tablaSimbolosMap.put(var, tipo);
             }
@@ -90,7 +88,7 @@ public class CompiladorGUI extends JFrame {
     private void validarAsignaciones(String linea, int numeroLinea) {
         String[] partes = linea.replace(";", "").split("=");
         String variable = partes[0].trim();
-        String valor = partes[1].trim();
+        String expresion = partes[1].trim();
 
         if (!tablaSimbolosMap.containsKey(variable)) {
             agregarError("Variable no definida", variable, numeroLinea, "La variable no ha sido declarada.");
@@ -98,11 +96,12 @@ public class CompiladorGUI extends JFrame {
         }
 
         String tipoVariable = tablaSimbolosMap.get(variable);
-        String tipoValor = obtenerTipoExpresion(valor, numeroLinea);
+        String tipoExpresion = obtenerTipoExpresion(expresion, numeroLinea);
 
-        if (tipoValor != null && !tipoVariable.equals(tipoValor)) {
-            agregarError("Incompatibilidad de tipos", valor, numeroLinea,
-                    "No se puede asignar " + tipoValor + " a " + tipoVariable + ".");
+        if (tipoExpresion != null && !tipoVariable.equals(tipoExpresion)) {
+            agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
+                    "No se puede asignar un valor de tipo '" + tipoExpresion + "' a una variable de tipo '"
+                            + tipoVariable + "'.");
         }
     }
 
@@ -113,6 +112,25 @@ public class CompiladorGUI extends JFrame {
             return "ENTERO";
         if (expresion.matches("\\d+\\.\\d+"))
             return "FLOTANTE";
+
+        String[] operadores = { "+", "-", "*", "/" };
+        for (String op : operadores) {
+            if (expresion.contains(op)) {
+                String[] partes = expresion.split("\\" + op);
+                if (partes.length == 2) {
+                    String tipo1 = obtenerTipoExpresion(partes[0].trim(), numeroLinea);
+                    String tipo2 = obtenerTipoExpresion(partes[1].trim(), numeroLinea);
+                    if (tipo1 == null || tipo2 == null)
+                        return null;
+                    if (!tipo1.equals(tipo2)) {
+                        agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
+                                "No se puede realizar la operación entre '" + tipo1 + "' y '" + tipo2 + "'.");
+                        return null;
+                    }
+                    return tipo1;
+                }
+            }
+        }
 
         if (tablaSimbolosMap.containsKey(expresion)) {
             return tablaSimbolosMap.get(expresion);

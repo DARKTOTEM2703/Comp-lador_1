@@ -3,6 +3,7 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 
 public class CompiladorGUI extends JFrame {
     private final JTextArea areaCodigo;
@@ -16,19 +17,22 @@ public class CompiladorGUI extends JFrame {
 
     public CompiladorGUI() {
         setTitle("Compilador - Análisis Semántico");
-        setSize(800, 600);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
         areaCodigo = new JTextArea();
         areaCodigo.setFont(new Font("Monospaced", Font.PLAIN, 14));
-        add(new JScrollPane(areaCodigo), BorderLayout.CENTER);
+        JScrollPane scrollCodigo = new JScrollPane(areaCodigo);
+        scrollCodigo.setPreferredSize(new Dimension(300, 200)); // Ajustar el tamaño del área de texto
+        add(scrollCodigo, BorderLayout.CENTER);
 
         botonAnalizar = new JButton("Analizar Código");
         botonAnalizar.addActionListener(this::analizarCodigo);
         add(botonAnalizar, BorderLayout.SOUTH);
 
         JPanel panelTablas = new JPanel(new GridLayout(2, 1));
+        panelTablas.setPreferredSize(new Dimension(1550, 400)); // Ajustar el tamaño de las tablas
         modeloTablaSimbolos = new DefaultTableModel(new String[] { "Lexema", "Tipo de dato" }, 0);
         tablaSimbolos = new JTable(modeloTablaSimbolos);
         panelTablas.add(new JScrollPane(tablaSimbolos));
@@ -39,6 +43,19 @@ public class CompiladorGUI extends JFrame {
         panelTablas.add(new JScrollPane(tablaErrores));
 
         add(panelTablas, BorderLayout.EAST);
+    }
+
+    private void ajustarAnchoColumnas(JTable table) {
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        for (int column = 0; column < table.getColumnCount(); column++) {
+            int width = 300; // Min width
+            for (int row = 0; row < table.getRowCount(); row++) {
+                TableCellRenderer renderer = table.getCellRenderer(row, column);
+                Component comp = table.prepareRenderer(renderer, row, column);
+                width = Math.max(comp.getPreferredSize().width + 1, width);
+            }
+            table.getColumnModel().getColumn(column).setPreferredWidth(width);
+        }
     }
 
     private void analizarCodigo(ActionEvent e) {
@@ -55,6 +72,9 @@ public class CompiladorGUI extends JFrame {
         tablaSimbolosMap.forEach((key, value) -> modeloTablaSimbolos.addRow(new Object[] { key, value }));
         tablaErroresList.forEach(error -> modeloTablaErrores
                 .addRow(new Object[] { error.token, error.lexema, error.linea, error.descripcion }));
+
+        ajustarAnchoColumnas(tablaSimbolos);
+        ajustarAnchoColumnas(tablaErrores);
     }
 
     private void procesarLinea(String linea, int numeroLinea) {

@@ -1,0 +1,7 @@
+ENTERO = JSJa1, JSJa2, JSJa3;
+FLOTANTE = JSJa4, JSJa5, JSJa6;
+CADENA = JSJa7;
+JSJa1 = 15;
+JSJa4 = 1.4;
+JSJa7 = "awaderuss";
+JSJa2 = JSJa10;

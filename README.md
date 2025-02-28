@@ -99,4 +99,4 @@ Este proyecto de compilador proporciona una herramienta útil para verificar la 
 
 ## 🔗 Enlace al Repositorio
 
-Consultar el repositorio en GitHub: [java_compiler](https://github.com/Jafet/Compilador_1)
+Consultar el repositorio en GitHub: [Compilador_1](https://github.com/DARKTOTEM2703/Comp-lador_1)

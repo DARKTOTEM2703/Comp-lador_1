@@ -151,8 +151,7 @@ public class CompiladorGUI extends JFrame {
 
         if (tipoExpresion != null && !tipoVariable.equals(tipoExpresion)) {
             agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
-                    "No se puede asignar un valor de tipo '" + tipoExpresion + "' a una variable de tipo '"
-                            + tipoVariable + "'.");
+                    "ERROR DE INCOMPATIBILIDAD DE TIPO" + tipoExpresion);
         }
     }
 

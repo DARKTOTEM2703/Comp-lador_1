@@ -12,7 +12,7 @@ public class CompiladorGUI extends JFrame {
     private final JTable tablaSimbolos, tablaErrores;
     private final DefaultTableModel modeloTablaSimbolos, modeloTablaErrores;
 
-    private static final String REGEX_VARIABLE = "^JSJ[a-zA-Z][0-9]+$"; // Actualiza la regex si lo necesitas.
+    private static final String REGEX_VARIABLE = "^JSJ[a-zA-Z][0-9]+$"; // Regex actualizada para las variables.
     private final java.util.List<Error> tablaErroresList = new ArrayList<>();
     private final Map<String, String> tablaSimbolosMap = new HashMap<>();
     private int contadorErrores = 1;
@@ -34,7 +34,7 @@ public class CompiladorGUI extends JFrame {
         botonCompilar.setBackground(new Color(70, 130, 180));
         botonCompilar.setForeground(Color.WHITE);
         botonCompilar.setFocusPainted(false);
-        botonCompilar.addActionListener(this::analizarCodigo);
+        botonCompilar.addActionListener(this::analizarCodigo); // Evento para analizar el código
         JPanel panelBoton = new JPanel();
         panelBoton.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         panelBoton.add(botonCompilar);
@@ -74,25 +74,38 @@ public class CompiladorGUI extends JFrame {
         panelTablas.add(scrollErrores);
     }
 
+    // Método que inicia el proceso de compilación en un hilo separado
     private void analizarCodigo(ActionEvent e) {
-        tablaSimbolosMap.clear();
-        tablaErroresList.clear();
-        modeloTablaSimbolos.setRowCount(0);
-        modeloTablaErrores.setRowCount(0);
+        // Crear un hilo para ejecutar la compilación y evitar que la interfaz se
+        // congele
+        new Thread(() -> {
+            try {
+                tablaSimbolosMap.clear();
+                tablaErroresList.clear();
+                modeloTablaSimbolos.setRowCount(0);
+                modeloTablaErrores.setRowCount(0);
 
-        String[] lineas = areaCodigo.getText().split("\n");
-        for (int i = 0; i < lineas.length; i++) {
-            procesarLinea(lineas[i].trim(), i + 1);
-        }
+                String[] lineas = areaCodigo.getText().split("\n");
+                for (int i = 0; i < lineas.length; i++) {
+                    procesarLinea(lineas[i].trim(), i + 1);
+                }
 
-        tablaSimbolosMap.forEach((key, value) -> modeloTablaSimbolos.addRow(new Object[] { key, value }));
-        tablaErroresList.forEach(error -> modeloTablaErrores
-                .addRow(new Object[] { error.token, error.lexema, error.linea, error.descripcion }));
-
-        ajustarAnchoColumnas(tablaSimbolos);
-        ajustarAnchoColumnas(tablaErrores);
+                // Actualizar las tablas en el hilo principal de la UI
+                SwingUtilities.invokeLater(() -> {
+                    tablaSimbolosMap.forEach((key, value) -> modeloTablaSimbolos.addRow(new Object[] { key, value }));
+                    tablaErroresList.forEach(error -> modeloTablaErrores
+                            .addRow(new Object[] { error.token, error.lexema, error.linea, error.descripcion }));
+                    ajustarAnchoColumnas(tablaSimbolos);
+                    ajustarAnchoColumnas(tablaErrores);
+                });
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error al procesar el código: " + ex.getMessage(), "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }).start();
     }
 
+    // Procesar cada línea del código
     private void procesarLinea(String linea, int numeroLinea) {
         if (linea.isEmpty())
             return;
@@ -106,6 +119,7 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
+    // Declarar variables y agregar a la tabla de símbolos
     private void declararVariables(String linea, int numeroLinea) {
         String[] partes = linea.replace(";", "").split("=");
         String tipo = partes[0].trim();
@@ -121,6 +135,7 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
+    // Validar asignaciones y verificar compatibilidad de tipos
     private void validarAsignaciones(String linea, int numeroLinea) {
         String[] partes = linea.replace(";", "").split("=");
         String variable = partes[0].trim();
@@ -141,6 +156,7 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
+    // Obtener el tipo de expresión y validar su formato
     private String obtenerTipoExpresion(String expresion, int numeroLinea) {
         if (expresion.startsWith("\"") && expresion.endsWith("\"")) {
             agregarSimbolo(expresion, "CADENA", numeroLinea);
@@ -165,7 +181,11 @@ public class CompiladorGUI extends JFrame {
                     if (tipo1 == null || tipo2 == null)
                         return null;
                     if (!tipo1.equals(tipo2)) {
-                        agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
+                        if ((tipo1.equals("ENTERO") && tipo2.equals("FLOTANTE"))
+                                || (tipo1.equals("FLOTANTE") && tipo2.equals("ENTERO"))) {
+                            return "FLOTANTE";
+                        }
+                        agregarError("Incompatibilidad de tipos", partes[1].trim(), numeroLinea,
                                 "No se puede realizar la operación entre '" + tipo1 + "' y '" + tipo2 + "'.");
                         return null;
                     }
@@ -178,21 +198,25 @@ public class CompiladorGUI extends JFrame {
             return tablaSimbolosMap.get(expresion);
         }
 
-        agregarError("Variable no definida", expresion, numeroLinea, "La variable no ha sido declarada.");
+        agregarError("Variable no definida", expresion, numeroLinea,
+                "La variable '" + expresion + "' no ha sido declarada.");
         return null;
     }
 
+    // Agregar símbolos a la tabla de símbolos
     private void agregarSimbolo(String lexema, String tipo, int numeroLinea) {
         if (!tablaSimbolosMap.containsKey(lexema)) {
             tablaSimbolosMap.put(lexema, tipo);
         }
     }
 
+    // Agregar errores a la tabla de errores
     private void agregarError(String token, String lexema, int linea, String descripcion) {
         String tokenError = "ERROR SEMANTICO " + contadorErrores++;
         tablaErroresList.add(new Error(tokenError, lexema, linea, descripcion));
     }
 
+    // Ajustar el ancho de las columnas para que se ajusten al contenido
     private void ajustarAnchoColumnas(JTable tabla) {
         TableColumnModel columnModel = tabla.getColumnModel();
         for (int column = 0; column < tabla.getColumnCount(); column++) {
@@ -206,6 +230,7 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
+    // Clase interna para representar los errores
     private static class Error {
         String token;
         String lexema;
@@ -220,6 +245,7 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
+    // Método main para ejecutar la aplicación
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new CompiladorGUI().setVisible(true));
     }

@@ -171,35 +171,52 @@ public class CompiladorGUI extends JFrame {
             return "FLOTANTE";
         }
 
+        // Aquí solo buscamos el lexema al final de la expresión
         String[] operadores = { "+", "-", "*", "/" };
         for (String op : operadores) {
             if (expresion.contains(op)) {
                 String[] partes = expresion.split("\\" + op);
                 if (partes.length == 2) {
-                    String tipo1 = obtenerTipoExpresion(partes[0].trim(), numeroLinea);
-                    String tipo2 = obtenerTipoExpresion(partes[1].trim(), numeroLinea);
-                    if (tipo1 == null || tipo2 == null)
-                        return null;
-                    if (!tipo1.equals(tipo2)) {
-                        if ((tipo1.equals("ENTERO") && tipo2.equals("FLOTANTE"))
-                                || (tipo1.equals("FLOTANTE") && tipo2.equals("ENTERO"))) {
-                            return "FLOTANTE";
-                        }
-                        agregarError("Incompatibilidad de tipos", partes[1].trim(), numeroLinea,
-                                "No se puede realizar la operación entre '" + tipo1 + "' y '" + tipo2 + "'.");
-                        return null;
+                    // Solo devolver el lexema final de la operación
+                    String lexemaFinal = partes[1].trim(); // La parte después del operador
+                    String lexemaInicial = partes[0].trim(); // La parte antes del operador
+
+                    // Obtener el tipo de cada parte de la expresión
+                    String tipoInicial = obtenerTipoExpresion(lexemaInicial, numeroLinea);
+                    String tipoFinal = obtenerTipoExpresion(lexemaFinal, numeroLinea);
+
+                    // Verificar si las partes son válidas
+                    if (tipoInicial == null) {
+                        agregarError("Variable o valor no definido", lexemaInicial, numeroLinea,
+                                "La variable o valor no ha sido declarado.");
+                        return null; // Return early if there's an error
                     }
-                    return tipo1;
+                    if (tipoFinal == null) {
+                        agregarError("Variable o valor no definido", lexemaFinal, numeroLinea,
+                                "La variable o valor no ha sido declarado.");
+                        return null; // Return early if there's an error
+                    }
+
+                    // Devolver el tipo de la expresión completa si ambas partes son válidas
+                    if (tipoInicial.equals(tipoFinal)) {
+                        return tipoInicial;
+                    } else {
+                        agregarError("Incompatibilidad de tipos", lexemaFinal, numeroLinea,
+                                "Los tipos de las variables o valores no coinciden.");
+                        return null; // Return early if there's an error
+                    }
                 }
             }
         }
 
+        // Si es una variable previamente declarada, devolver el tipo de la variable
         if (tablaSimbolosMap.containsKey(expresion)) {
             return tablaSimbolosMap.get(expresion);
         }
 
+        // Si no es reconocido, agregar un error
         agregarError("Variable no definida", expresion, numeroLinea,
-                "La variable '" + expresion + "' no ha sido declarada.");
+                "La variable no ha sido declarada.");
         return null;
     }
 

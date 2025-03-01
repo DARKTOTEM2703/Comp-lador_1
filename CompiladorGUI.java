@@ -15,6 +15,7 @@ public class CompiladorGUI extends JFrame {
     private static final String REGEX_VARIABLE = "^JSJ[a-zA-Z][0-9]+$"; // Actualiza la regex si lo necesitas.
     private final java.util.List<Error> tablaErroresList = new ArrayList<>();
     private final Map<String, String> tablaSimbolosMap = new HashMap<>();
+    private int contadorErrores = 1;
 
     public CompiladorGUI() {
         setTitle("Compilador - Análisis Semántico");
@@ -188,7 +189,8 @@ public class CompiladorGUI extends JFrame {
     }
 
     private void agregarError(String token, String lexema, int linea, String descripcion) {
-        tablaErroresList.add(new Error(token, lexema, linea, descripcion));
+        String tokenError = "ERROR SEMANTICO " + contadorErrores++;
+        tablaErroresList.add(new Error(tokenError, lexema, linea, descripcion));
     }
 
     private void ajustarAnchoColumnas(JTable tabla) {

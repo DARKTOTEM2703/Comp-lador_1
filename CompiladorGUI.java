@@ -142,7 +142,7 @@ public class CompiladorGUI extends JFrame {
         String expresion = partes[1].trim();
 
         if (!tablaSimbolosMap.containsKey(variable)) {
-            agregarError("Variable no definida", variable, numeroLinea, "La variable no ha sido declarada.");
+            agregarError("Variable no definida", variable, numeroLinea, "ERROR DE TIPO VARIABLE INDEFINIDA");
             return;
         }
 
@@ -216,7 +216,7 @@ public class CompiladorGUI extends JFrame {
 
         // Si no es reconocido, agregar un error
         agregarError("Variable no definida", expresion, numeroLinea,
-                "La variable no ha sido declarada.");
+                "ERROR DE TIPO VARIABLE INDEFINIDA");
         return null;
     }
 

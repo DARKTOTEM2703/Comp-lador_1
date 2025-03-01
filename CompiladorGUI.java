@@ -141,12 +141,18 @@ public class CompiladorGUI extends JFrame {
     }
 
     private String obtenerTipoExpresion(String expresion, int numeroLinea) {
-        if (expresion.startsWith("\"") && expresion.endsWith("\""))
+        if (expresion.startsWith("\"") && expresion.endsWith("\"")) {
+            agregarSimbolo(expresion, "CADENA", numeroLinea);
             return "CADENA";
-        if (expresion.matches("\\d+"))
+        }
+        if (expresion.matches("\\d+")) {
+            agregarSimbolo(expresion, "ENTERO", numeroLinea);
             return "ENTERO";
-        if (expresion.matches("\\d+\\.\\d+"))
+        }
+        if (expresion.matches("\\d+\\.\\d+")) {
+            agregarSimbolo(expresion, "FLOTANTE", numeroLinea);
             return "FLOTANTE";
+        }
 
         String[] operadores = { "+", "-", "*", "/" };
         for (String op : operadores) {
@@ -175,32 +181,40 @@ public class CompiladorGUI extends JFrame {
         return null;
     }
 
+    private void agregarSimbolo(String lexema, String tipo, int numeroLinea) {
+        if (!tablaSimbolosMap.containsKey(lexema)) {
+            tablaSimbolosMap.put(lexema, tipo);
+        }
+    }
+
     private void agregarError(String token, String lexema, int linea, String descripcion) {
         tablaErroresList.add(new Error(token, lexema, linea, descripcion));
     }
 
+    private void ajustarAnchoColumnas(JTable tabla) {
+        TableColumnModel columnModel = tabla.getColumnModel();
+        for (int column = 0; column < tabla.getColumnCount(); column++) {
+            int width = 0;
+            for (int row = 0; row < tabla.getRowCount(); row++) {
+                TableCellRenderer renderer = tabla.getCellRenderer(row, column);
+                Component comp = tabla.prepareRenderer(renderer, row, column);
+                width = Math.max(comp.getPreferredSize().width + 10, width);
+            }
+            columnModel.getColumn(column).setPreferredWidth(width);
+        }
+    }
+
     private static class Error {
-        String token, lexema, descripcion;
+        String token;
+        String lexema;
         int linea;
+        String descripcion;
 
         public Error(String token, String lexema, int linea, String descripcion) {
             this.token = token;
             this.lexema = lexema;
             this.linea = linea;
             this.descripcion = descripcion;
-        }
-    }
-
-    private void ajustarAnchoColumnas(JTable table) {
-        TableColumnModel columnModel = table.getColumnModel();
-        for (int column = 0; column < table.getColumnCount(); column++) {
-            int width = 15; // Min width
-            for (int row = 0; row < table.getRowCount(); row++) {
-                TableCellRenderer renderer = table.getCellRenderer(row, column);
-                Component comp = table.prepareRenderer(renderer, row, column);
-                width = Math.max(comp.getPreferredSize().width + 1, width);
-            }
-            columnModel.getColumn(column).setPreferredWidth(width);
         }
     }
 

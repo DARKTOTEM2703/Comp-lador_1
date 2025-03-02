@@ -114,6 +114,12 @@ public class CompiladorGUI extends JFrame {
             declararVariables(linea, numeroLinea);
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+\\s*=.*;$")) {
             validarAsignaciones(linea, numeroLinea);
+        } else if (linea.matches("^[0-9]+$")) {
+            tablaSimbolosMap.put(linea, "ENTERO");
+        } else if (linea.matches("^[0-9]+\\.[0-9]+$")) {
+            tablaSimbolosMap.put(linea, "FLOTANTE");
+        } else if (linea.matches("^[\\+\\-\\*/]$")) {
+            tablaSimbolosMap.put(linea, "VACIO");
         } else {
             agregarError("Sintaxis inválida", linea, numeroLinea, "Formato incorrecto.");
         }
@@ -151,7 +157,7 @@ public class CompiladorGUI extends JFrame {
 
         if (tipoExpresion != null && !tipoVariable.equals(tipoExpresion)) {
             agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
-                    "ERROR DE INCOMPATIBILIDAD DE TIPO" + tipoExpresion);
+                    "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
         }
     }
 
@@ -175,36 +181,27 @@ public class CompiladorGUI extends JFrame {
         for (String op : operadores) {
             if (expresion.contains(op)) {
                 String[] partes = expresion.split("\\" + op);
-                if (partes.length == 2) {
-                    // Solo devolver el lexema final de la operación
-                    String lexemaFinal = partes[1].trim(); // La parte después del operador
-                    String lexemaInicial = partes[0].trim(); // La parte antes del operador
-
-                    // Obtener el tipo de cada parte de la expresión
-                    String tipoInicial = obtenerTipoExpresion(lexemaInicial, numeroLinea);
-                    String tipoFinal = obtenerTipoExpresion(lexemaFinal, numeroLinea);
-
-                    // Verificar si las partes son válidas
-                    if (tipoInicial == null) {
-                        agregarError("Variable o valor no definido", lexemaInicial, numeroLinea,
+                for (String parte : partes) {
+                    String lexema = parte.trim();
+                    String tipo = obtenerTipoExpresion(lexema, numeroLinea);
+                    if (tipo == null) {
+                        agregarError("Variable o valor no definido", lexema, numeroLinea,
                                 "La variable o valor no ha sido declarado.");
                         return null; // Return early if there's an error
                     }
-                    if (tipoFinal == null) {
-                        agregarError("Variable o valor no definido", lexemaFinal, numeroLinea,
-                                "La variable o valor no ha sido declarado.");
-                        return null; // Return early if there's an error
-                    }
+                }
 
-                    // Devolver el tipo de la expresión completa si ambas partes son válidas
-                    if (tipoInicial.equals(tipoFinal)) {
-                        return tipoInicial;
-                    } else {
-                        agregarError("Incompatibilidad de tipos", lexemaFinal, numeroLinea,
+                // Verificar si todas las partes son del mismo tipo
+                String tipoInicial = obtenerTipoExpresion(partes[0].trim(), numeroLinea);
+                for (int i = 1; i < partes.length; i++) {
+                    String tipoParte = obtenerTipoExpresion(partes[i].trim(), numeroLinea);
+                    if (!tipoInicial.equals(tipoParte)) {
+                        agregarError("Incompatibilidad de tipos", partes[i].trim(), numeroLinea,
                                 "Los tipos de las variables o valores no coinciden.");
                         return null; // Return early if there's an error
                     }
                 }
+                return tipoInicial;
             }
         }
 

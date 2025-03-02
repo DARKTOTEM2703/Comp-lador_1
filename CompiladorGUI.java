@@ -119,7 +119,7 @@ public class CompiladorGUI extends JFrame {
         } else if (linea.matches("^[0-9]+\\.[0-9]+$")) {
             tablaSimbolosMap.put(linea, "FLOTANTE");
         } else if (linea.matches("^[\\+\\-\\*/]$")) {
-            tablaSimbolosMap.put(linea, "VACIO");
+            tablaSimbolosMap.put(linea, "OPERADOR");
         } else {
             agregarError("Sintaxis inválida", linea, numeroLinea, "Formato incorrecto.");
         }
@@ -200,7 +200,15 @@ public class CompiladorGUI extends JFrame {
                                 "Los tipos de las variables o valores no coinciden.");
                         return null; // Return early if there's an error
                     }
+
+                    // Verificar si el tipo es CADENA y el operador es válido
+                    if (tipoInicial.equals("CADENA") && !op.matches("[\\+\\-]")) {
+                        agregarError("Operación inválida", op, numeroLinea,
+                                "Las cadenas solo pueden sumarse o restarse.");
+                        return null; // Return early if there's an error
+                    }
                 }
+                agregarSimbolo(op, "OPERADOR", numeroLinea); // Agregar el operador a la tabla de símbolos
                 return tipoInicial;
             }
         }

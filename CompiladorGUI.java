@@ -188,8 +188,14 @@ public class CompiladorGUI extends JFrame {
             return "ENTERO";
         }
         if (expresion.matches("\\d+\\.\\d+")) {
-            agregarSimbolo(expresion, "FLOTANTE", numeroLinea);
-            return "FLOTANTE";
+            // Verificar si la parte decimal es 0
+            if (expresion.matches("\\d+\\.0+")) {
+                agregarSimbolo(expresion, "ENTERO", numeroLinea);
+                return "ENTERO";
+            } else {
+                agregarSimbolo(expresion, "FLOTANTE", numeroLinea);
+                return "FLOTANTE";
+            }
         }
 
         // Aquí solo buscamos el lexema al final de la expresión
@@ -197,24 +203,33 @@ public class CompiladorGUI extends JFrame {
         for (String op : operadores) {
             if (expresion.contains(op)) {
                 String[] partes = expresion.split("\\" + op);
-                for (String parte : partes) {
-                    String lexema = parte.trim();
-                    String tipo = obtenerTipoExpresion(lexema, numeroLinea);
-                    if (tipo == null) {
-                        agregarError("Variable o valor no definido", lexema, numeroLinea,
+                String tipoInicial = obtenerTipoExpresion(partes[0].trim(), numeroLinea);
+                if (tipoInicial == null) {
+                    agregarError("Variable o valor no definido", partes[0].trim(), numeroLinea,
+                            "La variable o valor no ha sido declarado.");
+                    return null; // Return early if there's an error
+                }
+
+                for (int i = 1; i < partes.length; i++) {
+                    String tipoParte = obtenerTipoExpresion(partes[i].trim(), numeroLinea);
+                    if (tipoParte == null) {
+                        agregarError("Variable o valor no definido", partes[i].trim(), numeroLinea,
                                 "La variable o valor no ha sido declarado.");
                         return null; // Return early if there's an error
                     }
-                }
 
-                // Verificar si todas las partes son del mismo tipo
-                String tipoInicial = obtenerTipoExpresion(partes[0].trim(), numeroLinea);
-                for (int i = 1; i < partes.length; i++) {
-                    String tipoParte = obtenerTipoExpresion(partes[i].trim(), numeroLinea);
+                    // Verificar si todas las partes son del mismo tipo
                     if (!tipoInicial.equals(tipoParte)) {
-                        agregarError("Incompatibilidad de tipos", partes[i].trim(), numeroLinea,
-                                "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoParte);
-                        return null; // Return early if there's an error
+                        // Permitir que los enteros se traten como flotantes en operaciones con
+                        // flotantes
+                        if ((tipoInicial.equals("ENTERO") && tipoParte.equals("FLOTANTE")) ||
+                                (tipoInicial.equals("FLOTANTE") && tipoParte.equals("ENTERO"))) {
+                            tipoInicial = "FLOTANTE";
+                        } else {
+                            agregarError("Incompatibilidad de tipos", partes[i].trim(), numeroLinea,
+                                    "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoParte);
+                            return null; // Return early if there's an error
+                        }
                     }
 
                     // Verificar si el tipo es CADENA y el operador es válido

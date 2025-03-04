@@ -150,6 +150,8 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
+    // ...existing code...
+
     // Validar asignaciones y verificar compatibilidad de tipos
     private void validarAsignaciones(String linea, int numeroLinea) {
         String[] partes = linea.replace(";", "").split("=");
@@ -164,9 +166,14 @@ public class CompiladorGUI extends JFrame {
         String tipoVariable = tablaSimbolosMap.get(variable);
         String tipoExpresion = obtenerTipoExpresion(expresion, numeroLinea);
 
-        if (tipoExpresion != null && !tipoVariable.equals(tipoExpresion)) {
-            agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
-                    "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
+        if (tipoExpresion != null) {
+            if (tipoVariable.equals("FLOTANTE") && tipoExpresion.equals("ENTERO")) {
+                tipoExpresion = "FLOTANTE"; // Tratar enteros como flotantes para variables de tipo FLOTANTE
+            }
+            if (!tipoVariable.equals(tipoExpresion)) {
+                agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
+                        "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
+            }
         }
     }
 

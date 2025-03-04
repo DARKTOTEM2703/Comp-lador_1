@@ -114,12 +114,21 @@ public class CompiladorGUI extends JFrame {
             declararVariables(linea, numeroLinea);
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+\\s*=.*;$")) {
             validarAsignaciones(linea, numeroLinea);
-        } else if (linea.matches("^[0-9]+$")) {
-            tablaSimbolosMap.put(linea, "ENTERO");
-        } else if (linea.matches("^[0-9]+\\.[0-9]+$")) {
-            tablaSimbolosMap.put(linea, "FLOTANTE");
+        } else if (linea.matches("^[0-9]+;$")) {
+            agregarSimbolo(linea.replace(";", ""), "ENTERO", numeroLinea);
+        } else if (linea.matches("^[0-9]+\\.[0-9]+;$")) {
+            agregarSimbolo(linea.replace(";", ""), "FLOTANTE", numeroLinea);
+        } else if (linea.matches("^\".*\";$")) {
+            agregarSimbolo(linea.replace(";", ""), "CADENA", numeroLinea);
         } else if (linea.matches(".*[\\+\\-\\*\\/\\=].*")) {
-            tablaSimbolosMap.put(linea, "VACIO");
+            String[] lexemas = linea.split("(?<=[\\+\\-\\*\\/\\=])|(?=[\\+\\-\\*\\/\\=])");
+            for (String lexema : lexemas) {
+                if (lexema.trim().matches("[\\+\\-\\*\\/\\=]")) {
+                    agregarSimbolo(lexema.trim(), "OPERADOR", numeroLinea);
+                } else {
+                    obtenerTipoExpresion(lexema.trim(), numeroLinea);
+                }
+            }
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+;$")) {
             agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
                     "ERROR DE TIPO VARIABLE INDEFINIDA");
@@ -150,129 +159,128 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
-    // Validar asignaciones y verificar compatibilidad de tipos
-    private void validarAsignaciones(String linea, int numeroLinea) {
-        String[] partes = linea.replace(";", "").split("=");
-        String variable = partes[0].trim();
-        String expresion = partes[1].trim();
+// Validar asignaciones y verificar compatibilidad de tipos
+private void validarAsignaciones(String linea, int numeroLinea) {
+    String[] partes = linea.replace(";", "").split("=");
+    String variable = partes[0].trim();
+    String expresion = partes[1].trim();
 
-        if (!tablaSimbolosMap.containsKey(variable)) {
-            agregarError("Variable no definida", variable, numeroLinea, "ERROR DE TIPO VARIABLE INDEFINIDA");
-            return;
-        }
+    if (!tablaSimbolosMap.containsKey(variable)) {
+        agregarError("Variable no definida", variable, numeroLinea, "ERROR DE TIPO VARIABLE INDEFINIDA");
+        return;
+    }
 
-        // Agregar el operador de asignación '=' a la tabla de símbolos
-        agregarSimbolo("=", "OPERADOR", numeroLinea);
+    // Agregar el operador de asignación '=' a la tabla de símbolos
+    agregarSimbolo("=", "OPERADOR", numeroLinea);
 
-        String tipoVariable = tablaSimbolosMap.get(variable);
-        String[] lexemas = expresion.split("(?<=[\\+\\-\\*\\/])|(?=[\\+\\-\\*\\/])");
-        for (String lexema : lexemas) {
-            if (lexema.trim().matches("[\\+\\-\\*\\/]")) {
-                agregarSimbolo(lexema.trim(), "OPERADOR", numeroLinea);
-            } else {
-                String tipoExpresion = obtenerTipoExpresion(lexema.trim(), numeroLinea);
-                if (tipoExpresion != null) {
-                    if (tipoVariable.equals("FLOTANTE") && tipoExpresion.equals("ENTERO")) {
-                        tipoExpresion = "FLOTANTE"; // Tratar enteros como flotantes para variables de tipo FLOTANTE
-                    }
-                    if (!tipoVariable.equals(tipoExpresion)) {
-                        agregarError("Incompatibilidad de tipos", lexema.trim(), numeroLinea,
-                                "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
-                    }
+    String tipoVariable = tablaSimbolosMap.get(variable);
+    String[] lexemas = expresion.split("(?<=[\\+\\-\\*\\/])|(?=[\\+\\-\\*\\/])");
+    for (String lexema : lexemas) {
+        if (lexema.trim().matches("[\\+\\-\\*\\/]")) {
+            agregarSimbolo(lexema.trim(), "OPERADOR", numeroLinea);
+        } else {
+            String tipoExpresion = obtenerTipoExpresion(lexema.trim(), numeroLinea);
+            if (tipoExpresion != null) {
+                if (tipoVariable.equals("FLOTANTE") && tipoExpresion.equals("ENTERO")) {
+                    tipoExpresion = "FLOTANTE"; // Tratar enteros como flotantes para variables de tipo FLOTANTE
+                }
+                if (!tipoVariable.equals(tipoExpresion)) {
+                    agregarError("Incompatibilidad de tipos", lexema.trim(), numeroLinea,
+                            "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
                 }
             }
         }
     }
+}
 
-    // Obtener el tipo de expresión y validar su formato
-    private String obtenerTipoExpresion(String expresion, int numeroLinea) {
-        if (expresion.startsWith("\"") && expresion.endsWith("\"")) {
-            agregarSimbolo(expresion, "CADENA", numeroLinea);
-            return "CADENA";
-        }
-        if (expresion.matches("\\d+")) {
+// Obtener el tipo de expresión y validar su formato
+private String obtenerTipoExpresion(String expresion, int numeroLinea) {
+    if (expresion.startsWith("\"") && expresion.endsWith("\"")) {
+        agregarSimbolo(expresion, "CADENA", numeroLinea);
+        return "CADENA";
+    }
+    if (expresion.matches("\\d+")) {
+        agregarSimbolo(expresion, "ENTERO", numeroLinea);
+        return "ENTERO";
+    }
+    if (expresion.matches("\\d+\\.\\d+")) {
+        // Verificar si la parte decimal es 0
+        if (expresion.matches("\\d+\\.0+")) {
             agregarSimbolo(expresion, "ENTERO", numeroLinea);
             return "ENTERO";
+        } else {
+            agregarSimbolo(expresion, "FLOTANTE", numeroLinea);
+            return "FLOTANTE";
         }
-        if (expresion.matches("\\d+\\.\\d+")) {
-            // Verificar si la parte decimal es 0
-            if (expresion.matches("\\d+\\.0+")) {
-                agregarSimbolo(expresion, "ENTERO", numeroLinea);
-                return "ENTERO";
-            } else {
-                agregarSimbolo(expresion, "FLOTANTE", numeroLinea);
-                return "FLOTANTE";
-            }
-        }
+    }
 
-        // Aquí solo buscamos el lexema al final de la expresión
-        String[] operadores = { "+", "-", "*", "/", "=" };
-        for (String op : operadores) {
-            if (expresion.contains(op)) {
-                String[] partes = expresion.split("\\" + op);
-                String tipoInicial = obtenerTipoExpresion(partes[0].trim(), numeroLinea);
-                if (tipoInicial == null) {
-                    agregarError("Variable o valor no definido", partes[0].trim(), numeroLinea,
+    // Aquí solo buscamos el lexema al final de la expresión
+    String[] operadores = { "+", "-", "*", "/", "=" };
+    for (String op : operadores) {
+        if (expresion.contains(op)) {
+            String[] partes = expresion.split("\\" + op);
+            String tipoInicial = obtenerTipoExpresion(partes[0].trim(), numeroLinea);
+            if (tipoInicial == null) {
+                agregarError("Variable o valor no definido", partes[0].trim(), numeroLinea,
+                        "La variable o valor no ha sido declarado.");
+                return null; // Return early if there's an error
+            }
+
+            for (int i = 1; i < partes.length; i++) {
+                String tipoParte = obtenerTipoExpresion(partes[i].trim(), numeroLinea);
+                if (tipoParte == null) {
+                    agregarError("Variable o valor no definido", partes[i].trim(), numeroLinea,
                             "La variable o valor no ha sido declarado.");
                     return null; // Return early if there's an error
                 }
 
-                for (int i = 1; i < partes.length; i++) {
-                    String tipoParte = obtenerTipoExpresion(partes[i].trim(), numeroLinea);
-                    if (tipoParte == null) {
-                        agregarError("Variable o valor no definido", partes[i].trim(), numeroLinea,
-                                "La variable o valor no ha sido declarado.");
-                        return null; // Return early if there's an error
-                    }
-
-                    // Verificar si todas las partes son del mismo tipo
-                    if (!tipoInicial.equals(tipoParte)) {
-                        // Permitir que los enteros se traten como flotantes en operaciones con
-                        // flotantes
-                        if ((tipoInicial.equals("ENTERO") && tipoParte.equals("FLOTANTE")) ||
-                                (tipoInicial.equals("FLOTANTE") && tipoParte.equals("ENTERO"))) {
-                            tipoInicial = "FLOTANTE";
-                        } else {
-                            agregarError("Incompatibilidad de tipos", partes[i].trim(), numeroLinea,
-                                    "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoParte);
-                        }
-                    }
-
-                    // Verificar si el tipo es CADENA y el operador es válido
-                    if (tipoInicial.equals("CADENA") && !op.matches("[\\+\\-]")) {
-                        agregarError("Operación inválida", op, numeroLinea,
-                                "Las cadenas solo pueden sumarse o restarse.");
-                        return null; // Return early if there's an error
+                // Verificar si todas las partes son del mismo tipo
+                if (!tipoInicial.equals(tipoParte)) {
+                    // Permitir que los enteros se traten como flotantes en operaciones con flotantes
+                    if ((tipoInicial.equals("ENTERO") && tipoParte.equals("FLOTANTE")) ||
+                        (tipoInicial.equals("FLOTANTE") && tipoParte.equals("ENTERO"))) {
+                        tipoInicial = "FLOTANTE";
+                    } else {
+                        agregarError("Incompatibilidad de tipos", partes[i].trim(), numeroLinea,
+                                "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoParte);
                     }
                 }
-                agregarSimbolo(op, "OPERADOR", numeroLinea); // Agregar el operador a la tabla de símbolos
-                return tipoInicial;
+
+                // Verificar si el tipo es CADENA y el operador es válido
+                if (tipoInicial.equals("CADENA") && !op.matches("[\\+\\-]")) {
+                    agregarError("Operación inválida", op, numeroLinea,
+                            "Las cadenas solo pueden sumarse o restarse.");
+                    return null; // Return early if there's an error
+                }
             }
-        }
-
-        // Si es una variable previamente declarada, devolver el tipo de la variable
-        if (tablaSimbolosMap.containsKey(expresion)) {
-            return tablaSimbolosMap.get(expresion);
-        }
-
-        // Si no es reconocido, agregar un error
-        agregarError("Variable no definida", expresion, numeroLinea,
-                "ERROR DE TIPO VARIABLE INDEFINIDA");
-        return null;
-    }
-
-    // Agregar símbolos a la tabla de símbolos
-    private void agregarSimbolo(String lexema, String tipo, int numeroLinea) {
-        if (!tablaSimbolosMap.containsKey(lexema)) {
-            tablaSimbolosMap.put(lexema, tipo);
+            agregarSimbolo(op, "OPERADOR", numeroLinea); // Agregar el operador a la tabla de símbolos
+            return tipoInicial;
         }
     }
 
-    // Agregar errores a la tabla de errores
-    private void agregarError(String token, String lexema, int linea, String descripcion) {
-        String tokenError = "ERROR SEMANTICO " + contadorErrores++;
-        tablaErroresList.add(new Error(tokenError, lexema, linea, descripcion));
+    // Si es una variable previamente declarada, devolver el tipo de la variable
+    if (tablaSimbolosMap.containsKey(expresion)) {
+        return tablaSimbolosMap.get(expresion);
     }
+
+    // Si no es reconocido, agregar un error
+    agregarError("Variable no definida", expresion, numeroLinea,
+            "ERROR DE TIPO VARIABLE INDEFINIDA");
+    return null;
+}
+
+// Agregar símbolos a la tabla de símbolos
+private void agregarSimbolo(String lexema, String tipo, int numeroLinea) {
+    if (!tablaSimbolosMap.containsKey(lexema)) {
+        tablaSimbolosMap.put(lexema, tipo);
+    }
+}
+
+// Agregar errores a la tabla de errores
+private void agregarError(String token, String lexema, int linea, String descripcion) {
+    String tokenError = "ERROR SEMANTICO " + contadorErrores++;
+    tablaErroresList.add(new Error(tokenError, lexema, linea, descripcion));
+}
 
     // Ajustar el ancho de las columnas para que se ajusten al contenido
     private void ajustarAnchoColumnas(JTable tabla) {

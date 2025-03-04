@@ -161,6 +161,9 @@ public class CompiladorGUI extends JFrame {
             return;
         }
 
+        // Agregar el operador de asignación '=' a la tabla de símbolos
+        agregarSimbolo("=", "OPERADOR", numeroLinea);
+
         String tipoVariable = tablaSimbolosMap.get(variable);
         String[] lexemas = expresion.split("(?<=[\\+\\-\\*\\/])|(?=[\\+\\-\\*\\/])");
         for (String lexema : lexemas) {

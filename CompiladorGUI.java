@@ -118,13 +118,11 @@ public class CompiladorGUI extends JFrame {
             tablaSimbolosMap.put(linea, "ENTERO");
         } else if (linea.matches("^[0-9]+\\.[0-9]+$")) {
             tablaSimbolosMap.put(linea, "FLOTANTE");
-        } else if (linea.matches("^[\\+\\-\\*\\/\\=]$")) {
+        } else if (linea.matches(".*[\\+\\-\\*\\/\\=].*")) {
             tablaSimbolosMap.put(linea, "VACIO");
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+;$")) {
             agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
                     "ERROR DE TIPO VARIABLE INDEFINIDA");
-        } else if (linea.matches("^=$")) {
-            agregarError("Operador indefinido", linea, numeroLinea, "El operador no está en una expresión válida.");
         } else if (linea.matches("^\\d+;$")) {
             agregarError("Valor indefinido", linea.replace(";", ""), numeroLinea,
                     "El valor no está en una expresión válida.");
@@ -188,7 +186,7 @@ public class CompiladorGUI extends JFrame {
         }
 
         // Aquí solo buscamos el lexema al final de la expresión
-        String[] operadores = { "+", "-", "*", "/", "=" };
+        String[] operadores = { "+", "-", "*", "/" };
         for (String op : operadores) {
             if (expresion.contains(op)) {
                 String[] partes = expresion.split("\\" + op);
@@ -219,7 +217,7 @@ public class CompiladorGUI extends JFrame {
                         return null; // Return early if there's an error
                     }
                 }
-                agregarSimbolo(op, "OPERADOR", numeroLinea); // Agregar el operador a la tabla de símbolos
+                agregarSimbolo(op, "VACIO", numeroLinea); // Agregar el operador a la tabla de símbolos
                 return tipoInicial;
             }
         }

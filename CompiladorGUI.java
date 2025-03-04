@@ -208,7 +208,7 @@ public class CompiladorGUI extends JFrame {
                     String tipoParte = obtenerTipoExpresion(partes[i].trim(), numeroLinea);
                     if (!tipoInicial.equals(tipoParte)) {
                         agregarError("Incompatibilidad de tipos", partes[i].trim(), numeroLinea,
-                                "Los tipos de las variables o valores no coinciden.");
+                                "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoParte);
                         return null; // Return early if there's an error
                     }
 

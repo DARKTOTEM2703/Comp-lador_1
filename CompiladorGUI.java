@@ -150,8 +150,6 @@ public class CompiladorGUI extends JFrame {
         }
     }
 
-    // ...existing code...
-
     // Validar asignaciones y verificar compatibilidad de tipos
     private void validarAsignaciones(String linea, int numeroLinea) {
         String[] partes = linea.replace(";", "").split("=");
@@ -164,15 +162,21 @@ public class CompiladorGUI extends JFrame {
         }
 
         String tipoVariable = tablaSimbolosMap.get(variable);
-        String tipoExpresion = obtenerTipoExpresion(expresion, numeroLinea);
-
-        if (tipoExpresion != null) {
-            if (tipoVariable.equals("FLOTANTE") && tipoExpresion.equals("ENTERO")) {
-                tipoExpresion = "FLOTANTE"; // Tratar enteros como flotantes para variables de tipo FLOTANTE
-            }
-            if (!tipoVariable.equals(tipoExpresion)) {
-                agregarError("Incompatibilidad de tipos", expresion, numeroLinea,
-                        "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
+        String[] lexemas = expresion.split("(?<=[\\+\\-\\*\\/])|(?=[\\+\\-\\*\\/])");
+        for (String lexema : lexemas) {
+            if (lexema.trim().matches("[\\+\\-\\*\\/]")) {
+                agregarSimbolo(lexema.trim(), "OPERADOR", numeroLinea);
+            } else {
+                String tipoExpresion = obtenerTipoExpresion(lexema.trim(), numeroLinea);
+                if (tipoExpresion != null) {
+                    if (tipoVariable.equals("FLOTANTE") && tipoExpresion.equals("ENTERO")) {
+                        tipoExpresion = "FLOTANTE"; // Tratar enteros como flotantes para variables de tipo FLOTANTE
+                    }
+                    if (!tipoVariable.equals(tipoExpresion)) {
+                        agregarError("Incompatibilidad de tipos", lexema.trim(), numeroLinea,
+                                "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
+                    }
+                }
             }
         }
     }
@@ -199,7 +203,7 @@ public class CompiladorGUI extends JFrame {
         }
 
         // Aquí solo buscamos el lexema al final de la expresión
-        String[] operadores = { "+", "-", "*", "/" };
+        String[] operadores = { "+", "-", "*", "/", "=" };
         for (String op : operadores) {
             if (expresion.contains(op)) {
                 String[] partes = expresion.split("\\" + op);
@@ -228,7 +232,6 @@ public class CompiladorGUI extends JFrame {
                         } else {
                             agregarError("Incompatibilidad de tipos", partes[i].trim(), numeroLinea,
                                     "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoParte);
-                            return null; // Return early if there's an error
                         }
                     }
 
@@ -239,7 +242,7 @@ public class CompiladorGUI extends JFrame {
                         return null; // Return early if there's an error
                     }
                 }
-                agregarSimbolo(op, "VACIO", numeroLinea); // Agregar el operador a la tabla de símbolos
+                agregarSimbolo(op, "OPERADOR", numeroLinea); // Agregar el operador a la tabla de símbolos
                 return tipoInicial;
             }
         }

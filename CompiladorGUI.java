@@ -119,7 +119,7 @@ public class CompiladorGUI extends JFrame {
         } else if (linea.matches("^[0-9]+\\.[0-9]+$")) {
             tablaSimbolosMap.put(linea, "FLOTANTE");
         } else if (linea.matches("^[\\+\\-\\*\\/\\=]$")) {
-            tablaSimbolosMap.put(linea, "OPERADOR");
+            tablaSimbolosMap.put(linea, "VACIO");
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+;$")) {
             agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
                     "ERROR DE TIPO VARIABLE INDEFINIDA");

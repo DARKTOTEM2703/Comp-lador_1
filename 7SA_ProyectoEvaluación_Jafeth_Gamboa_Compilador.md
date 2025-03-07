@@ -1,3 +1,56 @@
+# 🌟 Proyecto de Evaluación - Compilador 🌟
+
+---
+
+## 🎓 Universidad
+
+**Universidad Tecnológica de México**
+
+---
+
+## 💻 Carrera
+
+**Ingeniería en Sistemas Computacionales**
+
+---
+
+## 📚 Materia
+
+**Autómatas II**
+
+---
+
+## 🛠️ Proyecto
+
+**Compilador - Análisis Semántico**
+
+---
+
+## 👨‍🎓 Alumno
+
+**Jafeth Gamboa Baas**
+
+---
+
+## 📅 Semestre
+
+**7mo Semestre**
+
+---
+
+## 👩‍🏫 Profesor
+
+**MARIA JIMENEZ OCHOA**
+
+---
+
+## 📆 Fecha
+
+**06/03/2025**
+
+---
+
+```java
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
@@ -130,12 +183,8 @@ public class CompiladorGUI extends JFrame {
                 }
             }
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+;$")) {
-            if (!tablaSimbolosMap.containsKey(linea.replace(";", "").trim())) {
-                agregarSimbolo(linea.replace(";", ""), "OPERADOR", numeroLinea);
-            } else {
-                agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
-                        "ERROR DE TIPO VARIABLE INDEFINIDA");
-            }
+            agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
+                    "ERROR DE TIPO VARIABLE INDEFINIDA");
         } else if (linea.matches("^\\d+;$")) {
             agregarError("Valor indefinido", linea.replace(";", ""), numeroLinea,
                     "El valor no está en una expresión válida.");
@@ -171,9 +220,6 @@ private void validarAsignaciones(String linea, int numeroLinea) {
 
     if (!tablaSimbolosMap.containsKey(variable)) {
         agregarError("Variable no definida", variable, numeroLinea, "ERROR DE TIPO VARIABLE INDEFINIDA");
-        if (variable.matches(REGEX_VARIABLE)) {
-            agregarSimbolo(variable, "OPERADOR", numeroLinea);
-        }
         return;
     }
 
@@ -183,7 +229,7 @@ private void validarAsignaciones(String linea, int numeroLinea) {
     String tipoVariable = tablaSimbolosMap.get(variable);
     String[] lexemas = expresion.split("(?<=[\\+\\-\\*\\/])|(?=[\\+\\-\\*\\/])");
     for (String lexema : lexemas) {
-        if (lexema.trim().matches("[\\+\\-\\*\\/\\/]")) {
+        if (lexema.trim().matches("[\\+\\-\\*\\/]")) {
             agregarSimbolo(lexema.trim(), "OPERADOR", numeroLinea);
         } else {
             String tipoExpresion = obtenerTipoExpresion(lexema.trim(), numeroLinea);
@@ -193,7 +239,7 @@ private void validarAsignaciones(String linea, int numeroLinea) {
                 }
                 if (!tipoVariable.equals(tipoExpresion)) {
                     agregarError("Incompatibilidad de tipos", lexema.trim(), numeroLinea,
-                            "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoVariable);
+                            "ERROR DE INCOMPATIBILIDAD DE TIPO: " + tipoExpresion);
                 }
             }
         }
@@ -202,15 +248,6 @@ private void validarAsignaciones(String linea, int numeroLinea) {
 
 // Obtener el tipo de expresión y validar su formato
 private String obtenerTipoExpresion(String expresion, int numeroLinea) {
-    if (expresion.matches(REGEX_VARIABLE)) {
-        // Verificar si la variable está definida como ENTERO, CADENA o FLOTANTE
-        if (tablaSimbolosMap.containsKey(expresion)) {
-            return tablaSimbolosMap.get(expresion);
-        } else {
-            agregarSimbolo(expresion, "OPERADOR", numeroLinea);
-            return "OPERADOR";
-        }
-    }
     if (expresion.startsWith("\"") && expresion.endsWith("\"")) {
         agregarSimbolo(expresion, "CADENA", numeroLinea);
         return "CADENA";
@@ -278,7 +315,7 @@ private String obtenerTipoExpresion(String expresion, int numeroLinea) {
     if (tablaSimbolosMap.containsKey(expresion)) {
         return tablaSimbolosMap.get(expresion);
     }
-    
+
     // Si no es reconocido, agregar un error
     agregarError("Variable no definida", expresion, numeroLinea,
             "ERROR DE TIPO VARIABLE INDEFINIDA");
@@ -332,3 +369,4 @@ private void agregarError(String token, String lexema, int linea, String descrip
         SwingUtilities.invokeLater(() -> new CompiladorGUI().setVisible(true));
     }
 }
+```

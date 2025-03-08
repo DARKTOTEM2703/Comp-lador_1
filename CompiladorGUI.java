@@ -132,6 +132,8 @@ public class CompiladorGUI extends JFrame {
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+;$")) {
             if (!tablaSimbolosMap.containsKey(linea.replace(";", "").trim())) {
                 agregarSimbolo(linea.replace(";", ""), "OPERADOR", numeroLinea);
+                agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
+                        "ERROR DE TIPO VARIABLE INDEFINIDA");
             } else {
                 agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
                         "ERROR DE TIPO VARIABLE INDEFINIDA");
@@ -208,7 +210,8 @@ private String obtenerTipoExpresion(String expresion, int numeroLinea) {
             return tablaSimbolosMap.get(expresion);
         } else {
             agregarSimbolo(expresion, "OPERADOR", numeroLinea);
-            return "OPERADOR";
+            agregarError("Variable no definida", expresion, numeroLinea, "ERROR DE TIPO VARIABLE INDEFINIDA");
+            return null;
         }
     }
     if (expresion.startsWith("\"") && expresion.endsWith("\"")) {

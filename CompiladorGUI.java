@@ -110,6 +110,12 @@ public class CompiladorGUI extends JFrame {
         if (linea.isEmpty())
             return;
 
+        // Verificar si la línea termina con un ';'
+        if (!linea.endsWith(";")) {
+            JOptionPane.showMessageDialog(this, "Error en la línea " + numeroLinea + ": Cada línea debe terminar con un ';'.", "Error de sintaxis", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         if (linea.matches("^(ENTERO|FLOTANTE|CADENA)\\s*=.*;$")) {
             declararVariables(linea, numeroLinea);
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+\\s*=.*;$")) {
@@ -124,14 +130,14 @@ public class CompiladorGUI extends JFrame {
             String[] lexemas = linea.split("(?<=[\\+\\-\\*\\/\\=])|(?=[\\+\\-\\*\\/\\=])");
             for (String lexema : lexemas) {
                 if (lexema.trim().matches("[\\+\\-\\*\\/\\=]")) {
-                    agregarSimbolo(lexema.trim(), "OPERADOR", numeroLinea);
+                    agregarSimbolo(lexema.trim(), "VACIO", numeroLinea);
                 } else {
                     obtenerTipoExpresion(lexema.trim(), numeroLinea);
                 }
             }
         } else if (linea.matches("^JSJ[a-zA-Z][0-9]+;$")) {
             if (!tablaSimbolosMap.containsKey(linea.replace(";", "").trim())) {
-                agregarSimbolo(linea.replace(";", ""), "OPERADOR", numeroLinea);
+                agregarSimbolo(linea.replace(";", ""), "VACIO", numeroLinea);
                 agregarError("Variable indefinida", linea.replace(";", ""), numeroLinea,
                         "ERROR DE TIPO VARIABLE INDEFINIDA");
             } else {
@@ -174,19 +180,19 @@ private void validarAsignaciones(String linea, int numeroLinea) {
     if (!tablaSimbolosMap.containsKey(variable)) {
         agregarError("Variable no definida", variable, numeroLinea, "ERROR DE TIPO VARIABLE INDEFINIDA");
         if (variable.matches(REGEX_VARIABLE)) {
-            agregarSimbolo(variable, "OPERADOR", numeroLinea);
+            agregarSimbolo(variable, "VACIO", numeroLinea);
         }
         return;
     }
 
     // Agregar el operador de asignación '=' a la tabla de símbolos
-    agregarSimbolo("=", "OPERADOR", numeroLinea);
+    agregarSimbolo("=", "VACIO", numeroLinea);
 
     String tipoVariable = tablaSimbolosMap.get(variable);
     String[] lexemas = expresion.split("(?<=[\\+\\-\\*\\/])|(?=[\\+\\-\\*\\/])");
     for (String lexema : lexemas) {
         if (lexema.trim().matches("[\\+\\-\\*\\/\\/]")) {
-            agregarSimbolo(lexema.trim(), "OPERADOR", numeroLinea);
+            agregarSimbolo(lexema.trim(), "VACIO", numeroLinea);
         } else {
             String tipoExpresion = obtenerTipoExpresion(lexema.trim(), numeroLinea);
             if (tipoExpresion != null) {
@@ -209,7 +215,7 @@ private String obtenerTipoExpresion(String expresion, int numeroLinea) {
         if (tablaSimbolosMap.containsKey(expresion)) {
             return tablaSimbolosMap.get(expresion);
         } else {
-            agregarSimbolo(expresion, "OPERADOR", numeroLinea);
+            agregarSimbolo(expresion, "VACIO", numeroLinea);
             agregarError("Variable no definida", expresion, numeroLinea, "ERROR DE TIPO VARIABLE INDEFINIDA");
             return null;
         }
@@ -272,7 +278,7 @@ private String obtenerTipoExpresion(String expresion, int numeroLinea) {
                     return null; // Return early if there's an error
                 }
             }
-            agregarSimbolo(op, "OPERADOR", numeroLinea); // Agregar el operador a la tabla de símbolos
+            agregarSimbolo(op, "VACIO", numeroLinea); // Agregar el operador a la tabla de símbolos
             return tipoInicial;
         }
     }
